@@ -24,12 +24,11 @@ public class OtpController {
      */
     @PostMapping("/generate")
     public Map<String, Object> generateOtp(@RequestParam String email) {
-
-        // Generate OTP using OtpService
-    	// send an email using EmailService to the user with appropriate subject and body
-    	// Return an appropriate response so that it can be sent to frontend
-    	
-        return null;
+        String otp = otpService.generateOtp(email);
+        emailService.sendEmail(email, "Your OTP Code", "Your OTP code is: " + otp);
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "OTP sent to your email.");
+        return response;
     }
 
     /**
@@ -38,9 +37,13 @@ public class OtpController {
     @PostMapping("/verify")
     public Map<String, Object> verifyOtp(@RequestParam String email,
                                          @RequestParam String otp) {
-
-    	// Verify OTP using OtpService
-    	// Return appropriate response to frontend
+        boolean isValid = otpService.validateOtp(email, otp);
+        Map<String, Object> response = new HashMap<>();
+        if (isValid) {
+            response.put("message", "OTP verified successfully.");
+        } else {
+            response.put("message", "Invalid OTP.");
+        }
         return response;
     }
 }
