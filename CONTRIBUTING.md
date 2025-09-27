@@ -33,7 +33,13 @@ Make any necessary code, documentation, or test updates.
 
 ### 5. ⚙️ Environment Setup
 
-Before running the project or tests, set the environment variables for GMAIL_ACCOUNT, GMAIL_APP_KEY and REDIS_PASSWORD
+Before running the project or tests, set the environment variables that match those used in `application.properties`:
+- `spring.mail.username` → Your Gmail account  
+- `spring.mail.password` → Your 16-char Gmail App Key  
+- `redis.password` → Your Redis database password  
+
+⚠️ Do not commit secrets to GitHub. Use environment variables or a `.env` file (gitignored).
+
 
 ### 6. 🔨 Build the project
 ```
@@ -42,20 +48,23 @@ mvn clean install
 
 Make sure the build passes and tests run successfully.
 
-### 6. ⬆️ Push your branch
+### 7. ⬆️ Push your branch
 ```
 git push origin <your-branch-name>
 ```
 
-### 7. 📬 Open a Pull Request
+### 8. 📬 Open a Pull Request
 
 Go to your fork on GitHub and click “Compare & Pull Request”.
 
-Describe your changes and link any related issues (use Closes #issue syntax).
+- Fill in the PR description template (Summary, Changes, Why).  
+- Link any related issues (use `Closes #issue` syntax).  
+- Choose main (or the appropriate base branch) as the target.
+- Mention if this contribution is part of Hacktoberfest or GSSoC.  
 
-Choose main (or the appropriate base branch) as the target.
 
-### 8. 🔁 Resolve conflicts (if any)
+
+### 9. 🔁 Resolve conflicts (if any)
 
 If your PR has merge conflicts:
 
@@ -88,5 +97,5 @@ Once your PR is ready:
 
 - Assign it to a maintainer or request a review using GitHub’s review feature.
 
-- If you're contributing as part of Hacktoberfest, mention it in the PR description.
+
 

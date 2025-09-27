@@ -88,6 +88,19 @@ Gmail 16 char App Key: You can get the app key by navigating to google myaccount
 
 Redis Password: You can create a free db on [Redis](https://redis.io/). Once your db is created, click on the "Connect using Redis CLI, Client, or Insight" button. There you will be able to view your password (view/hide it using eye icon)
 
+
+### 🔑 Setup Secrets (Environment Variables)
+
+To run the project, you must provide your secrets as environment variables.  
+These are used in `application.properties` via Spring's placeholder system:
+
+| Variable Name                   | Description                                   | Example Value                  |
+|---------------------------------|-----------------------------------------------|--------------------------------|
+| `spring.mail.username`          | Your email for sending welcome emails.        | `your_email@gmail.com`         |
+| `spring.mail.password`          | Your 16-char app key for the email account.   | `abcd efgh ijkl mnop`          |
+| `redis.password`                | The password for your Redis database.         | `yourRedisDbPassword123`       |
+
+
 ## ⚠️ **NOTE:**  
 **🚫 DO NOT PUSH** the changes made in `application.properties`, `RedisConfig`, and `FirestoreService`.  
 🔒 _Keep your secrets safe!_ 🔒
