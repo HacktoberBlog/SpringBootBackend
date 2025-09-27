@@ -16,15 +16,18 @@ public class OtpService {
 	}
 
 	public String generateOtp(String email) {
-		// Generate a 6 digit OTP using Java library e.g. SecureRandom
-		// Set the key as email and value as OTP, with expiration time of 5-6 minutes using jedis object
-
-		return null;
+		SecureRandom random = new SecureRandom();
+		int otp = 100000 + random.nextInt(900000);
+		jedis.setex(email, 300, String.valueOf(otp));
+		return String.valueOf(otp);
 	}
 
-	public boolean verifyOtp(String email, String inputOtp) {
-		// Verify OTP function
-		// Once verified, delete the key value pair
+	public boolean validateOtp(String email, String inputOtp) {
+		String storedOtp = jedis.get(email);
+		if (storedOtp != null && storedOtp.equals(inputOtp)) {
+			jedis.del(email);
+			return true;
+		}
 		return false;
 	}
 	

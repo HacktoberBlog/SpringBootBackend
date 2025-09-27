@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.google.api.core.ApiFuture;
@@ -18,16 +20,18 @@ public class UserService {
 	private static final String COLLECTION_NAME = "users";
 	private static final String USERNAMES_DOC = "usernames";
 	private final EmailService emailService;
+	private final PasswordEncoder passwordEncoder;
 
 	// Inject EmailService through constructor
 	public UserService(EmailService emailService) {
 		this.emailService = emailService;
+		this.passwordEncoder = new BCryptPasswordEncoder();
 	}
 
 	/** Create User + Send Email */
 	public String create(User user) throws InterruptedException, ExecutionException {
 		Firestore db = FirestoreClient.getFirestore();
-		user.setPassword(Utils.encode(user.getPassword())); // Encrypt password
+		user.setPassword(passwordEncoder.encode(user.getPassword())); // Encrypt password
 
 		// Save user to Firestore
 		ApiFuture<WriteResult> result = db.collection(COLLECTION_NAME).document(user.getUsername()).set(user);
@@ -68,7 +72,7 @@ public class UserService {
 	public String update(User user) throws InterruptedException, ExecutionException {
 		Firestore db = FirestoreClient.getFirestore();
 		if (user.getPassword() != null) {
-			user.setPassword(Utils.encode(user.getPassword()));
+			user.setPassword(passwordEncoder.encode(user.getPassword()));
 		}
 		ApiFuture<WriteResult> result = db.collection(COLLECTION_NAME).document(user.getUsername()).set(user);
 		return result.get().getUpdateTime().toString();

@@ -2,6 +2,8 @@ package com.hacktober.blog.login;
 
 import java.util.concurrent.ExecutionException;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -12,6 +14,12 @@ import com.hacktober.blog.utils.Utils;
 
 @Service
 public class LoginService {
+
+    private final PasswordEncoder passwordEncoder;
+
+    public LoginService() {
+        this.passwordEncoder = new BCryptPasswordEncoder();
+    }
 
     public boolean login(String username, String password) throws InterruptedException, ExecutionException {
         Firestore db = FirestoreClient.getFirestore();
@@ -27,7 +35,6 @@ public class LoginService {
         }
 
         // Encrypt the incoming password and compare
-        String encodedInputPassword = Utils.encode(password);
-        return encodedInputPassword.equals(user.getPassword());
+        return passwordEncoder.matches(password, user.getPassword());
     }
 }
