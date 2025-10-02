@@ -19,7 +19,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class UserController {
 
     private final UserService userService;
-
     public UserController(UserService userService) {
         this.userService = userService;
     }
@@ -63,5 +62,4 @@ public class UserController {
         String result = userService.delete(username);
         return ResponseEntity.ok(ApiResponse.success(result, "User deleted successfully"));
     }
-
 }
