@@ -3,11 +3,20 @@ package com.hacktober.blog.user;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import com.hacktober.blog.exceptions.ResourceNotFoundException;
-import com.hacktober.blog.utils.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.hacktober.blog.exceptions.ResourceNotFoundException;
+import com.hacktober.blog.utils.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,13 +28,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class UserController {
 
     private final UserService userService;
+
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
     @PostMapping("/create")
     @Operation(summary = "Create user", description = "Persist a new user profile in the database.")
-    public ResponseEntity<ApiResponse<String>> createUser(@RequestBody User user) throws InterruptedException, ExecutionException {
+    public ResponseEntity<ApiResponse<String>> createUser(@RequestBody User user)
+            throws InterruptedException, ExecutionException {
         String result = userService.create(user);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(result, "User created successfully"));
@@ -33,7 +44,8 @@ public class UserController {
 
     @GetMapping("/{username}")
     @Operation(summary = "Get user", description = "Retrieve a single user by username.")
-    public ResponseEntity<ApiResponse<User>> getUser(@PathVariable String username) throws InterruptedException, ExecutionException {
+    public ResponseEntity<ApiResponse<User>> getUser(@PathVariable String username)
+            throws InterruptedException, ExecutionException {
         User user = userService.getByUsername(username);
         if (user == null) {
             throw new ResourceNotFoundException("User with username '" + username + "' not found");
@@ -50,7 +62,8 @@ public class UserController {
 
     @PutMapping("/{username}")
     @Operation(summary = "Update user", description = "Update a user's profile data, keeping the username immutable.")
-    public ResponseEntity<ApiResponse<String>> updateUser(@PathVariable String username, @RequestBody User user) throws InterruptedException, ExecutionException {
+    public ResponseEntity<ApiResponse<String>> updateUser(@PathVariable String username, @RequestBody User user)
+            throws InterruptedException, ExecutionException {
         user.setUsername(username); // ensure username remains the document ID
         String result = userService.update(user);
         return ResponseEntity.ok(ApiResponse.success(result, "User updated successfully"));
@@ -58,7 +71,8 @@ public class UserController {
 
     @DeleteMapping("/{username}")
     @Operation(summary = "Delete user", description = "Remove a user and their profile information.")
-    public ResponseEntity<ApiResponse<String>> deleteUser(@PathVariable String username) throws InterruptedException, ExecutionException {
+    public ResponseEntity<ApiResponse<String>> deleteUser(@PathVariable String username)
+            throws InterruptedException, ExecutionException {
         String result = userService.delete(username);
         return ResponseEntity.ok(ApiResponse.success(result, "User deleted successfully"));
     }
