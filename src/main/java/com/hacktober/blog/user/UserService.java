@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import com.hacktober.blog.login.entity.UserLoginEntity;
+import lombok.SneakyThrows;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.google.api.core.ApiFuture;
@@ -13,7 +18,7 @@ import com.hacktober.blog.email.EmailService;
 import com.hacktober.blog.utils.Utils;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
 	private static final String COLLECTION_NAME = "users";
 	private static final String USERNAMES_DOC = "usernames";
@@ -46,10 +51,12 @@ public class UserService {
 
 	/** Read/Get user by username */
 	public User getByUsername(String username) throws InterruptedException, ExecutionException {
-		Firestore db = FirestoreClient.getFirestore();
+		/*Firestore db = FirestoreClient.getFirestore();
 		DocumentReference docRef = db.collection(COLLECTION_NAME).document(username);
 		DocumentSnapshot snapshot = docRef.get().get();
-		return snapshot.exists() ? snapshot.toObject(User.class) : null;
+		return snapshot.exists() ? snapshot.toObject(User.class) : null;*/
+
+		return  new User("Biswarup","biswa123","biswa@gmail","$2a$12$AQmmEx7ngHxqXs8hH8DaOO4TL/89IrAfeFU/trddzXnrOKzPCVjXK",List.of());
 	}
 
 	/** Get all users */
@@ -123,4 +130,12 @@ public class UserService {
 	    public void removeUsername(String username) throws InterruptedException, ExecutionException {
 	        updateUsernames(username, false);
 	    }
+
+	@SneakyThrows
+    @Override
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		User user = getByUsername(username);
+		if(user == null) throw  new UsernameNotFoundException("User name not found for email: "+username);
+		return new UserLoginEntity(user.getUsername(),user.getPassword());
+	}
 }
