@@ -1,17 +1,22 @@
 package com.hacktober.blog.email;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
+@AllArgsConstructor
 public class EmailRequest {
+
+	@NotBlank
+	@Email
 	String to;
+	@NotBlank
 	String subject;
+	@NotBlank
 	String body;
-
-	public EmailRequest(String to, String subject, String body) {
-		super();
-		this.to = to;
-		this.subject = subject;
-		this.body = body;
-	}
-
+	
 	public String getTo() {
 		return to;
 	}

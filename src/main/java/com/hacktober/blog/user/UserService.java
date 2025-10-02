@@ -1,9 +1,11 @@
 package com.hacktober.blog.user;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.google.api.core.ApiFuture;
@@ -19,15 +21,18 @@ public class UserService {
 	private static final String USERNAMES_DOC = "usernames";
 	private final EmailService emailService;
 
+	private final PasswordEncoder passwordEncoder;
+
 	// Inject EmailService through constructor
-	public UserService(EmailService emailService) {
+	public UserService(EmailService emailService, PasswordEncoder passwordEncoder) {
 		this.emailService = emailService;
+		this.passwordEncoder = passwordEncoder;
 	}
 
 	/** Create User + Send Email */
 	public String create(User user) throws InterruptedException, ExecutionException {
 		Firestore db = FirestoreClient.getFirestore();
-		user.setPassword(Utils.encode(user.getPassword())); // Encrypt password
+		user.setPassword(passwordEncoder.encode(user.getPassword()));
 
 		// Save user to Firestore
 		ApiFuture<WriteResult> result = db.collection(COLLECTION_NAME).document(user.getUsername()).set(user);
@@ -68,7 +73,7 @@ public class UserService {
 	public String update(User user) throws InterruptedException, ExecutionException {
 		Firestore db = FirestoreClient.getFirestore();
 		if (user.getPassword() != null) {
-			user.setPassword(Utils.encode(user.getPassword()));
+			user.setPassword(passwordEncoder.encode(user.getPassword()));
 		}
 		ApiFuture<WriteResult> result = db.collection(COLLECTION_NAME).document(user.getUsername()).set(user);
 		return result.get().getUpdateTime().toString();
@@ -82,45 +87,66 @@ public class UserService {
 		removeUsername(username);
 		return result.get().getUpdateTime().toString();
 	}
-	
+
 
 	public List<String> getAllUsernames() throws InterruptedException, ExecutionException {
-	        Firestore db = FirestoreClient.getFirestore();
-	        DocumentReference docRef = db.collection(COLLECTION_NAME).document(USERNAMES_DOC);
-	        DocumentSnapshot snapshot = docRef.get().get();
+		Firestore db = FirestoreClient.getFirestore();
+		DocumentReference docRef = db.collection(COLLECTION_NAME).document(USERNAMES_DOC); // users/usernames
+		DocumentSnapshot snapshot = docRef.get().get();
 
-	        if (snapshot.exists() && snapshot.contains("usernames")) {
-	        	System.out.println(snapshot.get("usernames"));
-	            return (List<String>) snapshot.get("usernames");
-	        }
-	        return new ArrayList<>();
-	    }
+		if (snapshot.exists() && snapshot.contains("usernames")) {
+			return (List<String>) snapshot.get("usernames");
+		}
+		return new ArrayList<>();
+	}
 
-	    /** Add or remove username from usernames array */
-	    public String updateUsernames(String username, boolean add) throws InterruptedException, ExecutionException {
-	        Firestore db = FirestoreClient.getFirestore();
-	        DocumentReference docRef = db.collection("usernames").document("usernames");
 
-	        List<String> currentUsernames = getAllUsernames();
-	        if (add) {
-	            if (!currentUsernames.contains(username)) {
-	                currentUsernames.add(username);
-	            }
-	        } else {
-	            currentUsernames.remove(username);
-	        }
+	/** Add or remove username using atomic array ops; creates doc if missing */
+	public String updateUsernames(String username, boolean add) throws InterruptedException, ExecutionException {
+		Firestore db = FirestoreClient.getFirestore();
+		DocumentReference docRef = db.collection(COLLECTION_NAME).document(USERNAMES_DOC); // users/usernames
 
-	        ApiFuture<WriteResult> result = docRef.update("usernames", currentUsernames);
-	        return result.get().getUpdateTime().toString();
-	    }
+		// Ensure the doc exists without clobbering existing fields
+		docRef.set(Collections.singletonMap("usernames", Collections.emptyList()), SetOptions.merge()).get();
 
-	    /** Helper: add a username */
-	    private void addUsername(String username) throws InterruptedException, ExecutionException {
-	        updateUsernames(username, true);
-	    }
+		ApiFuture<WriteResult> write = add
+				? docRef.update("usernames", FieldValue.arrayUnion(username))
+				: docRef.update("usernames", FieldValue.arrayRemove(username));
 
-	    /** Helper: remove a username */
-	    public void removeUsername(String username) throws InterruptedException, ExecutionException {
-	        updateUsernames(username, false);
-	    }
+		return write.get().getUpdateTime().toString();
+	}
+
+	/** Helper: add a username */
+	private void addUsername(String username) throws InterruptedException, ExecutionException {
+		updateUsernames(username, true);
+	}
+
+	/** Helper: remove a username */
+	public void removeUsername(String username) throws InterruptedException, ExecutionException {
+		updateUsernames(username, false);
+	}
+
+	/** Reset password by email (returns true if a user was updated) */
+	public boolean resetPasswordByEmail(String email, String rawNewPassword) {
+		try {
+			Firestore db = FirestoreClient.getFirestore();
+			// Find the user doc by email (username is the doc id, but we don't know it here)
+			ApiFuture<QuerySnapshot> future = db.collection(COLLECTION_NAME)
+					.whereEqualTo("email", email)
+					.limit(1)
+					.get();
+
+			List<QueryDocumentSnapshot> docs = future.get().getDocuments();
+			if (docs.isEmpty()) {
+				return false;
+			}
+
+			DocumentReference docRef = docs.get(0).getReference();
+			String hash = passwordEncoder.encode(rawNewPassword);
+			docRef.update("password", hash).get();
+			return true;
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to reset password", e);
+		}
+	}
 }
