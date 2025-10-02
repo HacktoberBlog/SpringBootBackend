@@ -23,4 +23,10 @@ public class EmailService {
         message.setText(text);
         mailSender.send(message);
     }
+    public void sendPasswordResetOtp(String to, String otp) {
+        String subject = "Your HacktoberBlog password reset code";
+        String body = "Use this code to reset your password: " + otp + "\nIt expires in 10 minutes.";
+        sendEmail(to, subject, body);
+    }
+
 }
