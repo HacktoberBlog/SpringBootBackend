@@ -2,6 +2,14 @@ package com.hacktober.blog.login;
 
 import java.util.concurrent.ExecutionException;
 
+import com.hacktober.blog.user.auth.JwtService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -13,20 +21,21 @@ import com.hacktober.blog.utils.Utils;
 @Service
 public class LoginService {
 
-    public boolean login(String username, String password) throws InterruptedException, ExecutionException {
-        Firestore db = FirestoreClient.getFirestore();
-        DocumentSnapshot doc = db.collection("users").document(username).get().get();
+    @Autowired
+    private JwtService jwtService;
 
-        if (!doc.exists()) {
-            return false; // user not found
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    public String login(String username, String password) throws InterruptedException, ExecutionException {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, password)
+        );
+        if (authentication.isAuthenticated()) {
+            return jwtService.generateToken(username);
+        } else {
+            throw new UsernameNotFoundException("Invalid user request!");
         }
-
-        User user = doc.toObject(User.class);
-        if (user == null) {
-            return false;
-        }
-
-        // Encrypt the incoming password and compare
-        return Utils.match(password, user.getPassword());
     }
+
+
 }
