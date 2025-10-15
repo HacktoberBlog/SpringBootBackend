@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # Redis service for caching
+  redis:
+    image: redis:7-alpine
+    container_name: blog-redis
+    ports:
+      - "6380:6379"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redispassword}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redispassword}
+    volumes:
+      - redis_data:/data
+
+  # Main Spring Boot application
+  blog-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blog-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - GMAIL_ACCOUNT=${GMAIL_ACCOUNT:-your-email@gmail.com}
+      - GMAIL_APP_KEY=${GMAIL_APP_KEY:-your-app-password}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redispassword}
+      - NOTIFICATIONS_ENABLED=${NOTIFICATIONS_ENABLED:-true}
+      - AUTH_JWT_SECRET=${AUTH_JWT_SECRET:-my-secret-key}
+    depends_on:
+      - redis
+    volumes:
+      - ./logs:/app/logs
+
+volumes:
+  redis_data:
